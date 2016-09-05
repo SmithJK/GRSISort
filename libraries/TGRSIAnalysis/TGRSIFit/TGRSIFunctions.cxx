@@ -86,6 +86,11 @@ Double_t TGRSIFunctions::PhotoPeakBG(Double_t *dim, Double_t *par){
    return Gaus(dim,par) + SkewedGaus(dim,par) + StepFunction(dim,par) + PolyBg(dim,&par[6],2);
 }
 
+Double_t TGRSIFunctions::PhotoPeakBGWithGaus(Double_t *dim, Double_t *par){
+//Returns a single RadWare style peak   
+   return Gaus(dim,par) + SkewedGaus(dim,par) + StepFunction(dim,par) + PolyBg(dim,&par[6],2) + Gaus(dim,&par[9]);
+}
+
 
 Double_t TGRSIFunctions::MultiPhotoPeakBG(Double_t *dim, Double_t *par) {
   //

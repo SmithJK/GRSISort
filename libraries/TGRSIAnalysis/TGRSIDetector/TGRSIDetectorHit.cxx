@@ -53,10 +53,12 @@ Double_t TGRSIDetectorHit::GetTime(Option_t* opt) const {
 	TChannel* chan = GetChannel();
 	if(!chan) {
 		Error("GetTime","No TChannel exists for address 0x%08x",GetAddress());
-		return 10.*dTime;
+//		return 10.*dTime;
+      return dTime;
 	}
 
-	return 10.*(dTime - chan->GetTZero(GetEnergy()));
+//	return 10.*(dTime - chan->GetTZero(GetEnergy()));
+	return (dTime - chan->GetTZero(GetEnergy()));
 }
 
 Double_t TGRSIDetectorHit::GetTime(Option_t* opt) {
@@ -64,13 +66,22 @@ Double_t TGRSIDetectorHit::GetTime(Option_t* opt) {
 		return fTime;
 
 	Double_t dTime = static_cast<Double_t>((GetTimeStamp()) + gRandom->Uniform());
+   //------------temporary modification -JKS
+   //uint64_t TS = ((GetTimeStamp() >> 18 ) << 22);
+   //uint64_t Cfd = GetCfd();
+   //TS = (TS | Cfd);
+   //Double_t dTime = static_cast<Double_t>((TS + gRandom->Uniform()));
+   //dTime = dTime/16; // to put in units of 10 ns (timestamps)
+   //------------end temporary modification
 	TChannel* chan = GetChannel();
 	if(!chan) {
 		Error("GetTime","No TChannel exists for address 0x%08x",GetAddress());
-		return 10.*dTime;
+//		return 10.*dTime;
+		return dTime;
 	}
 
-	SetTime(10.*(dTime - chan->GetTZero(GetEnergy())));
+//	SetTime(10.*(dTime - chan->GetTZero(GetEnergy())));
+	SetTime((dTime - chan->GetTZero(GetEnergy())));
 
 	return fTime;
 }

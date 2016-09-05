@@ -345,6 +345,11 @@ void TAnalysisTreeBuilder::SortFragmentTreeByTimeStamp() {
   //this multiset is used to sort the fragments we're reading sequentially (but not necessarily time-ordered) from the tree
   std::multiset<TFragment,std::less<TFragment> > sortedFragments;//less is the default ordering option, could be left out
 
+   bool rolledover = kFALSE;
+   int factor = 0;
+   int newfactor = 0;
+   short int counter = 0;
+   bool testing = kFALSE;
   //loop over all of the fragments in the tree 
   for(int x = 0; x < fEntries; ++x) {
     if(fCurrentFragTree->GetEntry(x) == -1 ) {
@@ -354,6 +359,37 @@ void TAnalysisTreeBuilder::SortFragmentTreeByTimeStamp() {
       continue;
     }
     fFragmentsIn++;//Now that we have read a new entry, we need to increment our counter
+
+      ///////////////// JKS edit for 47Ca data ////////////////
+      // the number below is 1022 because offsetfix might make the TimeStampHigh a bit higher than 512, but it shouldn't make it higher than that
+      if (currentFrag->TimeStampHigh>1022 || currentFrag->TimeStampHigh<0) continue;
+      if (currentFrag->NetworkPacketNumber==0) continue;
+
+		if (!testing && currentFrag->TimeStampHigh>=510) ++counter;
+      // open testing period
+      if (!testing && counter==10) {
+         testing = kTRUE;
+         newfactor = factor+1;
+         counter = 0;
+      }
+		if (testing && currentFrag->TimeStampHigh>=2 && currentFrag->TimeStampHigh<10) ++counter;
+      // close testing period
+      if (counter==10 && testing) {
+         testing = kFALSE;
+         factor = newfactor;
+         counter = 0;
+      }
+
+      // testing for timestamp rollover
+      if (testing && currentFrag->TimeStampHigh<10)
+      {
+         currentFrag->TimeStampHigh = currentFrag->TimeStampHigh+512*newfactor;
+      }
+      else {
+         currentFrag->TimeStampHigh = currentFrag->TimeStampHigh+512*factor;
+      }
+      
+      /////////////////////////////////////////////////////////
 
     //pull the different pile-up hits apart and put the into the sorted buffer as different fragments
     //for(size_t hit = 0; hit < currentFrag->Cfd.size(); ++hit) {  //fragment inserted twice; pcb.
@@ -381,6 +417,19 @@ void TAnalysisTreeBuilder::SortFragmentTreeByTimeStamp() {
     ///and the first and last of the fragments are at least BuildWindow apart.
     long firstTimeStamp = (*(sortedFragments.begin())).GetTimeStamp();
     long lastTimeStamp = (*(std::prev(sortedFragments.end()))).GetTimeStamp();
+      /////////////// check for timestamp wrap-around / roll-over - iJKS ///////////////
+      // TimeStampHigh == 510 and TimeStampLow == 0 gives a decimal TS of 136902082560.
+		if((((sortedFragments.size() > TGRSIRunInfo::BufferSize()) && (lastTimeStamp-firstTimeStamp>1.3e11)) &! rolledover)) {
+         printf("Found a timestamp wrap-around.\n");
+         rolledover=kTRUE;
+         int currentsize = TGRSIRunInfo::BufferSize();
+         printf("First time stamp: %li\n",firstTimeStamp);
+         printf("Last time stamp: %li\n",lastTimeStamp);
+         printf("Buffer size was %i\n", currentsize);
+         TGRSIRunInfo::Get()->SetBufferSize(2*currentsize);
+         printf("Now buffer size is %i\n",(int)TGRSIRunInfo::BufferSize());
+      }
+      /////////////////////////////////////////////////////////////////////////////////
     if(//(lastTimeStamp - firstTimeStamp > TGRSIRunInfo::BufferDuration()) ||
         ((sortedFragments.size() > TGRSIRunInfo::BufferSize()) && ((lastTimeStamp - firstTimeStamp) > TGRSIRunInfo::BuildWindow()))) {
       //We are now in a situation where we think that no more fragments will be read that will end up at the beginning of the multiset.
@@ -754,10 +803,17 @@ void TAnalysisTreeBuilder::ProcessEvent() {
     std::vector<TFragment>* event = TEventQueue::PopEntry();
     MNEMONIC mnemonic;
     std::map<std::string, TDetector*>* detectors = new std::map<std::string, TDetector*>;
+    //if (event->at(0).TimeStampHigh < 400) printf("TimeStampHigh:%i\tTimeStampLow:%i\tevent size: %i\n",event->at(0).TimeStampHigh,event->at(0).TimeStampLow,event->size());
     for(size_t i=0;i<event->size();i++) {
       TChannel* channel = TChannel::GetChannel(event->at(i).ChannelAddress);
       if(!channel)
         continue;
+      ////////// this is a check for 2016 GRIFFIN data -JKS //////////
+      //if(event->at(i).ChannelNumber!=31) continue;
+      ////////// this is a check for 2014 GRIFFIN data -JKS //////////
+      if(event->at(i).NetworkPacketNumber==0)
+         continue;
+      ///////////////////////////////////////////////////////////
       ClearMNEMONIC(&mnemonic);
       ParseMNEMONIC(channel->GetChannelName(),&mnemonic);
 

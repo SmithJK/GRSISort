@@ -12,6 +12,7 @@
 
 #include "TFragment.h"
 #include "TChannel.h"
+#include "TGRSIRunInfo.h"
 
 #include "TGRSIDetectorHit.h"
 
@@ -82,7 +83,7 @@ class TGriffinHit : public TGRSIDetectorHit {
       virtual void Copy(TObject&) const;        //!<!
 
    private:
-      TVector3 GetChannelPosition(Double_t dist = 110.0) const; //!<!
+      TVector3 GetChannelPosition(Double_t dist = TGRSIRunInfo::HPGeArrayPosition()) const; //!<!
       void SetGriffinFlag(enum EGriffinHitBits,Bool_t set);
 	
 /// \cond CLASSIMP

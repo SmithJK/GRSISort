@@ -109,6 +109,11 @@ Bool_t TGainMatch::CoarseMatch(TH1* hist, Int_t chanNum, Double_t energy1, Doubl
    for(int x=0; x<2; x++) {
       TPeak tmpPeak(foundBin[x],foundBin[x] - 10./binWidth, foundBin[x] + 10./binWidth);
       tmpPeak.SetName(Form("GM_Cent_%lf",foundBin[x]));//Change the name of the TPeak to know it's origin
+      tmpPeak.InitParams(hist);
+      tmpPeak.SetParameter(2,1.0);
+      tmpPeak.ReleaseParameter(4);
+      tmpPeak.SetParLimits(4,0,100.);
+      tmpPeak.SetParameter(4,1.0);
       tmpPeak.Fit(hist,"+");
       SetPoint(x,tmpPeak.GetParameter("centroid"),engVec[x]);
    }
