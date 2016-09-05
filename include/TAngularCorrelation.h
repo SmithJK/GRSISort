@@ -94,6 +94,7 @@ class TAngularCorrelation : public TObject {
       //----------------- functions for diagnostics, re-fitting, modification of ACs
       void UpdatePeak(Int_t index,TPeak* peak);
       void ScaleSingleIndex(TH1* hst, Int_t index, Double_t factor);
+      void ZeroOutIndex(TH2* hst, Int_t index);
       void UpdateIndexCorrelation();
       void UpdateDiagnostics();
       void DisplayDiagnostics(TCanvas* c_diag);

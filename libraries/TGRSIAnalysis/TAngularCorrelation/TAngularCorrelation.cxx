@@ -1550,6 +1550,22 @@ void TAngularCorrelation::UpdateIndexCorrelation()
 }
 
 ////////////////////////////////////////////////////////////////////
+/// Zeros out a particular index (y-axis bin)
+///
+
+void TAngularCorrelation::ZeroOutIndex(TH2* hst, Int_t index)
+{
+   Int_t xbins = hst->GetXaxis()->GetNbins();
+   Int_t ybin = hst->GetYaxis()->FindBin(index);
+   for (Int_t i=1;i<=xbins;i++) {
+      hst->SetBinContent(i,ybin,0);
+      hst->SetBinError(i,ybin,0);
+   }
+
+   return;
+}
+
+////////////////////////////////////////////////////////////////////
 /// Updates index correlation based on peak array
 ///
 
@@ -1572,6 +1588,7 @@ void TAngularCorrelation::ScaleSingleIndex(TH1* hst, Int_t index, Double_t facto
 
    return;
 }
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Updates diagnostics based on peak array
 ///
